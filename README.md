@@ -24,3 +24,6 @@ You can setup the needed scripts on your existing AquaCPU_VISUAL Extention, so y
 # USAGE
 
 # IMAGES
+
+## A simple working test with the Aqua_CPU_Refill_Extention
+![Gopher image](/documentation/images/sms_test.png)
