@@ -58,6 +58,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AquaCPU_SMS_GATEWAY.cpp" />
+    <ClCompile Include="gpiolib.cpp" />
     <ClCompile Include="ini_parser.cpp" />
     <ClCompile Include="serialib.cpp" />
   </ItemGroup>
@@ -66,6 +67,7 @@
     <None Include="AquaCPU_SMS_GATEWAY-Release.vgdbsettings" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="gpiolib.h" />
     <ClInclude Include="ini_parser.hpp" />
     <ClInclude Include="serialib.h" />
   </ItemGroup>

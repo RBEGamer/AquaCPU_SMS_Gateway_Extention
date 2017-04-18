@@ -1,6 +1,6 @@
 #include <iostream>
 
-
+/*GPIO LIB http://www.netzmafia.de/skripten/hardware/RasPi/RasPi_GPIO_C.html*/
 /*
 RECIEVE CAN MESSAGES WITH A FILTER OR ALL
 
@@ -58,7 +58,7 @@ EINE CSV FILE FÜR JEDE EXTENTION MIT DEN MESSAGES
 #include <linux/can/raw.h>
 #include "serialib.h"
 #include "ini_parser.hpp"
-#include <wiringPi.h>
+#include "gpiolib.h"
 
 
 namespace simple_logger {
@@ -90,7 +90,7 @@ namespace simple_logger {
 		log_entry.append("->");
 		switch (_type)
 		{
-		case LOG_TYPE::ERROR:log_entry.append("<b>ERROR</b>"); break;
+		case LOG_TYPE::ERROR:log_entry.append("<b>ERROR</b>"); std::cout << "--- ERROR --- PLEASE SEE LOGFILE" << std::endl; break;
 		case LOG_TYPE::INFO:log_entry.append("INFO"); break;
 		case LOG_TYPE::WARNING:log_entry.append("WARNING"); break;
 		default:log_entry.append("<b>UNKNOWN_TYPE</b>"); break;
@@ -129,7 +129,6 @@ struct CAN_MESSAGES_STRUCT
 	ENDIANNESS byte_order;
 
 };
-
 union DATA_UNION
 {
 	__u8 byt[8];
@@ -169,7 +168,9 @@ serialib LS;                                                            // Objec
 int Ret;             //returns the recieved serial chars                                                   // Used for return values
 char Buffer[128]; //for the serial recieve
 
-std::vector<std::string> sms_messages;
+std::vector<std::string> sms_messages; //if you want to send  a sms simply add an entry with your text
+
+int SIM800L_RESET_PIN = 17; //wil be overwritten
 // ------------------- END GLOBALS -------------------------------
 
 
@@ -334,7 +335,7 @@ void signalHandler(int signum) {
 	simple_logger::stop_log();
 
 
-
+	gpio_unexport(SIM800L_RESET_PIN);
 	can_close_port();
 	LS.Close();
 	std::cout << "Interrupt signal (" << signum << ") received.\n";
@@ -541,31 +542,33 @@ int main(int argc, char *argv[])
 
 
 	//OPEN SERIAL PORT
-
-
-
-	Ret = LS.Open("/dev/ttyUSB0", 115200);
+	const char* uart_port = conf_parser->get_value("interface", "gsm_serial_port")->c_str();
+	int uart_baud = atoi(conf_parser->get_value("interface", "gsm_serial_baud")->c_str());
+	Ret = LS.Open(uart_port, uart_baud);
 	if (Ret != 1) {
 		simple_logger::log("SERIAL_PORT_OPEN_FAILED", simple_logger::LOG_TYPE::ERROR);
 		return -1;
 	}
 
-	//TRIGGER RESET PORT
+	
 
+	//LOADING OTHER GSM SETTINGS
+	std::string rec_number = "";
+	rec_number = *conf_parser->get_value("gsm", "recieve_number");
+	std::string sim_pin = "";
+	sim_pin = *conf_parser->get_value("gsm", "sim_pin");
 
-
-
-	//sms_messages.push_back("1. TEST");
-	//sms_messages.push_back("2. TEST");
-	//sms_messages.push_back("3. TEST");
-	//sms_messages.push_back("4. TEST");
-
+	bool send_appl_flash_sms = false;
+	conf_ci = *conf_parser->get_value("gsm", "sim_send_apple_flash_sms");
+	if (conf_ci == "1") {
+		send_appl_flash_sms = true;
+	}
 
 	std::vector<UART_MESSAGES> uart_msg_queue;
 	int send_index = 0;
 	//TODO NAKE A SEPERATE SETUP FUNC FOR GSM WITH ERROR MESSAGE
 	//TODO READ PIN FROM CONF FILE
-	//TODO USE WIRING PI FOR RESET AND SWITCH FOR EN SENING + LED
+	//TODO SWITCH FOR EN SENING + LED
 	//WAIT AT SETUP FOR RDY
 	UART_MESSAGES tmp;
 	tmp.to_send = "AT";
@@ -573,7 +576,7 @@ int main(int argc, char *argv[])
 	tmp.send = false;
 	tmp.noCR = false;
 	uart_msg_queue.push_back(tmp);
-	tmp.to_send = "AT+CPIN=\"0689\"";
+	tmp.to_send = "AT+CPIN=\"" + sim_pin +"\"";
 	tmp.expected = "SMS Ready";
 	tmp.send = false;
 	tmp.noCR = false;
@@ -583,13 +586,17 @@ int main(int argc, char *argv[])
 	tmp.send = false;
 	tmp.noCR = false;
 	uart_msg_queue.push_back(tmp);
-//	tmp.to_send = "AT+CSMP=17,167,0,16"; //TODO SET THIS AS OPTION
-	tmp.to_send = "AT";
+	//SENDING CODE FOR FLASH SMS
+	if (send_appl_flash_sms) {
+		tmp.to_send = "AT+CSMP=17,167,0,16";
+	}else {
+		tmp.to_send = "AT";
+	}
 	tmp.expected = "OK";
 	tmp.send = false;
 	tmp.noCR = false;
 	uart_msg_queue.push_back(tmp);
-	tmp.to_send = "AT+CMGS=\"01714927699\"";
+	tmp.to_send = "AT+CMGS=\"" + rec_number + "\"";
 	tmp.expected = "> ";
 	tmp.send = false;
 	tmp.noCR = true;
@@ -606,6 +613,31 @@ int main(int argc, char *argv[])
 		uart_msg_queue.at(5).send = false;
 		//sms_messages.pop_back();
 	}
+
+
+
+	//TRIGGER RESET PORT
+	conf_ci = *conf_parser->get_value("gsm", "sim_reset_pin");
+	if (!check_for_only_numbers(conf_ci)) {
+		simple_logger::log("INI_ÜARSING_GPIO_NUMBER", simple_logger::LOG_TYPE::ERROR);
+		return -1;
+	}
+	SIM800L_RESET_PIN = atoi(conf_ci.c_str());
+	if (gpio_export(SIM800L_RESET_PIN) < 0) {
+		simple_logger::log("EXPORT_RESET_PIN_FAILED", simple_logger::LOG_TYPE::ERROR);
+		return -1;
+	}
+	if (gpio_direction(SIM800L_RESET_PIN, OUT) < 0) {
+		simple_logger::log("DIRECTTION_SET_OUT_RESET_PIN_FAILED", simple_logger::LOG_TYPE::ERROR);
+		gpio_unexport(SIM800L_RESET_PIN);
+		return -1;
+	}
+	gpio_write(SIM800L_RESET_PIN, LOW);
+	delay(100);
+	gpio_write(SIM800L_RESET_PIN, HIGH);
+	delay(10000); //LONG DELAY FOR INTI TODO CHECK FOR RDY MESSAGE
+
+
 
 	while (true)
 	{

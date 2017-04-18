@@ -28,6 +28,9 @@
     <ClCompile Include="serialib.cpp">
       <Filter>Source files</Filter>
     </ClCompile>
+    <ClCompile Include="gpiolib.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="AquaCPU_SMS_GATEWAY-Debug.vgdbsettings">
@@ -43,6 +46,9 @@
     </ClInclude>
     <ClInclude Include="serialib.h">
       <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="gpiolib.h">
+      <Filter>Header files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
