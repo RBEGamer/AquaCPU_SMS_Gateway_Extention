@@ -24,6 +24,8 @@ You can setup the needed scripts on your existing AquaCPU_VISUAL Extention, so y
 # USAGE
 
 # IMAGES
+## Final Hardware, with no case
+![Gopher image](/documentation/images/final_haardware.png)
 
 ## A simple working test with the Aqua_CPU_Refill_Extention
 ![Gopher image](/documentation/images/sms_test.png)
