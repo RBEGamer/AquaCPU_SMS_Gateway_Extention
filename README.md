@@ -13,7 +13,7 @@ A further extention for my AquaCPU System
 * 1 Actived SimCard
 * 1 USB to 3.3V UART converter.
 * 1 SD Card with Debian for the pi
-
+* 1 StepUp-Converter 3.3V -> 4.2V (for the Sim800L)
 
 # SOFTWARE SETUP
 * Make a basic setup of your pi (run setup, epand partition,..)
