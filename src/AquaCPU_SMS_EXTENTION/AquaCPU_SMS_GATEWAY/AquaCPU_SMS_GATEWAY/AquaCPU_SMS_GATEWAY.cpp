@@ -1,4 +1,3 @@
-#include <iostream>
 
 /*GPIO LIB http://www.netzmafia.de/skripten/hardware/RasPi/RasPi_GPIO_C.html*/
 /*
@@ -6,7 +5,7 @@ RECIEVE CAN MESSAGES WITH A FILTER OR ALL
 
 
 //DOWNLOAD FILTER FILE WITH DATATYPES
-EINE CSV FILE FÜR JEDE EXTENTION MIT DEN MESSAGES
+EINE CSV FILE FÃœR JEDE EXTENTION MIT DEN MESSAGES
 
 
 
@@ -127,8 +126,8 @@ struct CAN_MESSAGES_STRUCT
 	CAN_DATA_TYPES type;
 	std::string message;
 	ENDIANNESS byte_order;
-
 };
+//FOR CAN DATA CONVERSION
 union DATA_UNION
 {
 	__u8 byt[8];
@@ -136,19 +135,15 @@ union DATA_UNION
 	int int_2;
 	long long_4;
 	bool bool_1;
-
 };
-
-
-
-//holds a can fraem with converted datatype
+//holds a can frame with converted datatype
 struct CAN_PROCECCED_FRAME_STRUCT
 {
 	long can_id;
 	DATA_UNION data;
 	CAN_DATA_TYPES type;
 };
-
+//FOR THE AUTOMATIC SENDING UART MESSAGES IF A EXPECTED String COMES IN
 struct UART_MESSAGES
 {
 	std::string to_send;
@@ -156,10 +151,10 @@ struct UART_MESSAGES
 	bool send;
 	bool noCR;
 };
-// ------------------ GLOBALS -------------------------------------
 
+// ------------------ GLOBALS -------------------------------------
 sig_atomic_t signaled = 0; //FOR SINAL HANDLING
-std::vector<CAN_MESSAGES_STRUCT> listen_can_messages; //PARSED CAN LISTEN MESSAGES FORM  CSV FILE
+std::vector<CAN_MESSAGES_STRUCT> listen_can_messages; //PARSED CAN LISTEN MESSAGES
 int soc;
 int read_can_port;
 //UART
@@ -247,7 +242,6 @@ void process_can_frame(can_frame& _frame) {
 				break;
 			}
 			//TODO CONVERT
-			int fif = 0;
 		}
 	}
 
@@ -292,7 +286,7 @@ int can_send_port(struct can_frame *frame)
 		return (0);
 	}
 }
-/* this is just an example, run in a thread */
+
 void can_read_port()
 {
 	struct can_frame frame_rd;
@@ -333,8 +327,6 @@ int can_close_port()
 void signalHandler(int signum) {
 	simple_logger::log("GOT INTERRUPT SIGNAL", simple_logger::LOG_TYPE::INFO);
 	simple_logger::stop_log();
-
-
 	gpio_unexport(SIM800L_RESET_PIN);
 	can_close_port();
 	LS.Close();
@@ -619,7 +611,7 @@ int main(int argc, char *argv[])
 	//TRIGGER RESET PORT
 	conf_ci = *conf_parser->get_value("gsm", "sim_reset_pin");
 	if (!check_for_only_numbers(conf_ci)) {
-		simple_logger::log("INI_ÜARSING_GPIO_NUMBER", simple_logger::LOG_TYPE::ERROR);
+		simple_logger::log("INI_ÃœARSING_GPIO_NUMBER", simple_logger::LOG_TYPE::ERROR);
 		return -1;
 	}
 	SIM800L_RESET_PIN = atoi(conf_ci.c_str());
