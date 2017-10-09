@@ -5,6 +5,7 @@ You simply can use this module to sens sms messages on spcified can bus messages
 # FEATURES
 * Adds SMS notification support for the AquaCPU System
 * Simple config
+* Can message filter options
 
 
 # HARDWARE
